@@ -3,8 +3,8 @@ import pandas as pd
 import sqlite3
 from datetime import datetime
 
-st.set_page_config(page_title="模型車記錄系統 v2.0 Beta", layout="wide")
-st.title("🚗 模型車收藏管理系統 v2.0 Beta")
+st.set_page_config(page_title="Model Car Record System", layout="wide")
+st.title("Model Car Record System v2.0 Beta")
 
 DB_NAME = "model_cars.db"
 
@@ -156,43 +156,50 @@ with tab3:
         
         if uploaded_file is not None:
             try:
-                # 使用 openpyxl 引擎並處理錯誤
-                df = pd.read_excel(uploaded_file, engine='openpyxl')
+                # 使用 pandas 預設引擎，避免 openpyxl 依賴問題
+                df = pd.read_excel(uploaded_file)
+                st.success("✅ 檔案讀取成功！以下是前10筆預覽：")
                 st.dataframe(df.head(10))
                 
-                if st.button("確認匯入資料"):
+                if st.button("確認匯入資料到資料庫"):
                     conn = sqlite3.connect(DB_NAME)
                     cursor = conn.cursor()
                     success = 0
+                    skipped = 0
                     
                     for _, row in df.iterrows():
-                        cursor.execute('''
-                            INSERT INTO model_cars 
-                            (brand, car_brand, model, scale, car_plate, car_number, purchase_date, 
-                             value, notes, product_id, product_web_link)
-                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                        ''', (
-                            row.get('品牌'), 
-                            row.get('車廠'), 
-                            row.get('型號'),
-                            row.get('比例'), 
-                            row.get('車牌'), 
-                            row.get('編號'),
-                            row.get('購買日期'),
-                            float(row.get('金額 (HKD)')) if pd.notna(row.get('金額 (HKD)')) else None,
-                            row.get('備註'), 
-                            row.get('產品編號'), 
-                            row.get('產品連結')
-                        ))
-                        success += 1
+                        try:
+                            cursor.execute('''
+                                INSERT INTO model_cars 
+                                (brand, car_brand, model, scale, car_plate, car_number, purchase_date, 
+                                 value, notes, product_id, product_web_link)
+                                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                            ''', (
+                                row.get('品牌'), 
+                                row.get('車廠'), 
+                                row.get('型號'),
+                                row.get('比例'), 
+                                row.get('車牌'), 
+                                row.get('編號'),
+                                row.get('購買日期'),
+                                float(row.get('金額 (HKD)')) if pd.notna(row.get('金額 (HKD)')) else None,
+                                row.get('備註'), 
+                                row.get('產品編號'), 
+                                row.get('產品連結')
+                            ))
+                            success += 1
+                        except:
+                            skipped += 1
                     
                     conn.commit()
                     conn.close()
-                    st.success(f"✅ 成功匯入 {success} 筆資料！")
+                    
+                    st.success(f"✅ 匯入完成！成功 {success} 筆，跳過 {skipped} 筆")
                     st.rerun()
+                    
             except Exception as e:
-                st.error(f"讀取失敗：{str(e)}")
-                st.info("💡 提示：請確保 Excel 檔案有正確欄位名稱（如「品牌」「車廠」「型號」等）")
+                st.error(f"❌ 讀取 Excel 失敗：{str(e)}")
+                st.info("💡 建議：請確認 Excel 第一列的欄位名稱與程式中的欄位一致（品牌、車廠、型號等）")
 
     with col2:
         st.write("匯出到 Excel")
@@ -206,4 +213,4 @@ with tab3:
                 mime="text/csv"
             )
 
-st.caption("模型車記錄系統 v2.0 Beta | Streamlit 網頁版")
+st.caption("Model Car Record System v2.0 Beta | Streamlit 網頁版")
