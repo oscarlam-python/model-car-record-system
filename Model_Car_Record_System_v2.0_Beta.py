@@ -142,12 +142,16 @@ with tab3:
     col1, col2 = st.columns(2)
     
     with col1:
-        st.write("從 Excel 匯入")
-        uploaded_file = st.file_uploader("上傳 Excel 檔案 (.csv)", type=["csv"])
+        st.write("從 Excel / CSV 匯入")
+        uploaded_file = st.file_uploader("上傳檔案", type=["xlsx", "xls", "csv"])
         
         if uploaded_file is not None:
             try:
-                df = pd.read_excel(uploaded_file)
+                if uploaded_file.name.endswith('.csv'):
+                    df = pd.read_csv(uploaded_file)
+                else:
+                    df = pd.read_excel(uploaded_file)
+                
                 st.success("✅ 檔案讀取成功！預覽前 10 筆：")
                 st.dataframe(df.head(10))
                 
@@ -185,9 +189,10 @@ with tab3:
                     conn.close()
                     st.success(f"✅ 匯入完成！成功 {success} 筆，跳過 {skipped} 筆")
                     st.rerun()
+                    
             except Exception as e:
                 st.error(f"❌ 讀取失敗：{str(e)}")
-                st.info("💡 建議：請確保 Excel 第一列欄位名稱正確（品牌、車廠、型號、比例、車牌、編號、購買日期、金額 (HKD)、備註、產品編號、產品連結）")
+                st.info("💡 建議：請確保檔案第一列欄位名稱正確，例如：品牌、車廠、型號、比例、車牌、編號、購買日期、金額 (HKD)、備註、產品編號、產品連結")
 
     with col2:
         st.write("匯出資料")
