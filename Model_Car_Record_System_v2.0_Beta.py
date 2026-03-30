@@ -143,7 +143,7 @@ with tab3:
     
     with col1:
         st.write("從 Excel 匯入")
-        uploaded_file = st.file_uploader("上傳 Excel 檔案 (.xlsx)", type=["xlsx"])
+        uploaded_file = st.file_uploader("上傳 Excel 檔案 (.csv)", type=["csv"])
         
         if uploaded_file is not None:
             try:
