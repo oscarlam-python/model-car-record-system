@@ -98,9 +98,14 @@ with tab1:
     st.subheader("收藏列表")
     df = get_all_cars()
     
-    # 徹底清理 NaN
+    # === 徹底清理所有 NaN（加強版）===
     for col in df.columns:
-        df[col] = df[col].apply(clean_value)
+        df[col] = df[col].apply(lambda x: "" if pd.isna(x) or x is None or str(x).lower() == "nan" else str(x).strip())
+    
+    # 額外強制轉換（確保 st.dataframe 不顯示 nan）
+    df = df.fillna("")
+    df = df.replace("nan", "", regex=True)
+    df = df.replace("NaN", "", regex=True)
     
     keyword = st.text_input("🔍 搜尋", "")
     if keyword:
