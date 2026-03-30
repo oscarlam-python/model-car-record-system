@@ -108,7 +108,26 @@ with tab1:
     if keyword:
         df = df[df.apply(lambda row: keyword.lower() in str(row).lower(), axis=1)]
     
-    st.dataframe(df, use_container_width=True, hide_index=True)
+    # === 調整表格寬度與欄位顯示 ===
+    st.dataframe(
+        df,
+        use_container_width=True,
+        hide_index=True,
+        column_config={
+            "id": st.column_config.NumberColumn("ID", width=60),
+            "brand": st.column_config.TextColumn("品牌", width=120),
+            "car_brand": st.column_config.TextColumn("車廠", width=150),
+            "model": st.column_config.TextColumn("型號", width=220),
+            "scale": st.column_config.TextColumn("比例", width=90),
+            "car_plate": st.column_config.TextColumn("車牌", width=130),
+            "car_number": st.column_config.TextColumn("編號", width=110),
+            "purchase_date": st.column_config.TextColumn("購買日期", width=130),
+            "value": st.column_config.NumberColumn("金額 (HKD)", width=120, format="%.0f"),
+            "notes": st.column_config.TextColumn("備註", width=300),
+            "product_id": st.column_config.TextColumn("產品編號", width=180),
+            "product_web_link": st.column_config.TextColumn("產品連結", width=350),
+        }
+    )
 
     selected_ids = st.multiselect("選擇要刪除的 ID", options=df['id'].tolist() if not df.empty else [])
     if st.button("🗑️ 刪除選取的資料"):
@@ -128,7 +147,6 @@ with tab2:
         format_func=lambda x: f"ID {x} - 編輯" if x else "新增新記錄"
     )
 
-    # 載入現有資料（如果選擇編輯）
     current_data = None
     if selected_id:
         current_data = cars[cars['id'] == selected_id].iloc[0]
