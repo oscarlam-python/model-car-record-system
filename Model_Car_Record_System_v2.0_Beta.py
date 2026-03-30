@@ -138,7 +138,7 @@ with tab2:
             st.rerun()
 
 with tab3:
-    st.subheader("📊 Excel 工具")
+    st.subheader("📊 Excel 工具 + 資料備份")
     col1, col2 = st.columns(2)
     
     with col1:
@@ -147,11 +147,10 @@ with tab3:
         
         if uploaded_file is not None:
             try:
-                if uploaded_file.name.endswith('.csv'):
+                if uploaded_file.name.lower().endswith('.csv'):
                     df = pd.read_csv(uploaded_file)
                 else:
                     df = pd.read_excel(uploaded_file)
-                
                 st.success("✅ 檔案讀取成功！預覽前 10 筆：")
                 st.dataframe(df.head(10))
                 
@@ -160,7 +159,6 @@ with tab3:
                     cursor = conn.cursor()
                     success = 0
                     skipped = 0
-                    
                     for _, row in df.iterrows():
                         try:
                             cursor.execute('''
@@ -184,15 +182,12 @@ with tab3:
                             success += 1
                         except:
                             skipped += 1
-                    
                     conn.commit()
                     conn.close()
                     st.success(f"✅ 匯入完成！成功 {success} 筆，跳過 {skipped} 筆")
                     st.rerun()
-                    
             except Exception as e:
                 st.error(f"❌ 讀取失敗：{str(e)}")
-                st.info("💡 建議：請確保檔案第一列欄位名稱正確，例如：品牌、車廠、型號、比例、車牌、編號、購買日期、金額 (HKD)、備註、產品編號、產品連結")
 
     with col2:
         st.write("匯出資料")
@@ -202,8 +197,28 @@ with tab3:
             st.download_button(
                 label="下載 CSV 檔案",
                 data=csv,
-                file_name=f"MCRS_Record_{datetime.now().strftime('%Y-%m-%d_%H-%M')}.csv",
+                file_name=f"MCRS_Record_{datetime.now().strftime('%Y-%m-%d_%H-%M=%S')}.csv",
                 mime="text/csv"
             )
+
+        # ====================== 新增：資料備份自動化選項 ======================
+        st.write("---")
+        st.write("**資料備份（自動化）**")
+        if st.button("💾 立即備份完整資料庫（.db）", type="primary"):
+            try:
+                with open(DB_NAME, "rb") as f:
+                    db_bytes = f.read()
+                backup_name = f"model_cars_backup_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.db"
+                st.download_button(
+                    label="📥 下載資料庫備份檔",
+                    data=db_bytes,
+                    file_name=backup_name,
+                    mime="application/octet-stream"
+                )
+                st.success(f"✅ 備份檔已準備好！檔名：{backup_name}")
+            except Exception as e:
+                st.error(f"備份失敗：{str(e)}")
+
+        st.caption("💡 建議：每次重要操作後點擊一次備份，按鈕會自動產生帶時間戳的檔案")
 
 st.caption("Model Car Record System | By Oscar Lam | 2026/03/30 | v2.0 | Streamlit 網頁版")
