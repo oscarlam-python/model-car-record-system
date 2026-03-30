@@ -3,8 +3,8 @@ import pandas as pd
 import sqlite3
 from datetime import datetime
 
-st.set_page_config(page_title="Model Car Record System", layout="wide")
-st.title("Model Car Record System v2.0 Beta")
+st.set_page_config(page_title="模型車記錄系統 v2.0 Beta", layout="wide")
+st.title("🚗 模型車收藏管理系統 v2.0 Beta")
 
 DB_NAME = "model_cars.db"
 
@@ -91,26 +91,21 @@ tab1, tab2, tab3 = st.tabs(["📋 資料列表", "➕ 新增 / 編輯", "📊 Ex
 with tab1:
     st.subheader("收藏列表")
     df = get_all_cars()
-    
-    keyword = st.text_input("🔍 搜尋（品牌、車廠、型號等）", "")
+    keyword = st.text_input("🔍 搜尋", "")
     if keyword:
         df = df[df.apply(lambda row: keyword.lower() in str(row).lower(), axis=1)]
-    
     st.dataframe(df, use_container_width=True, hide_index=True)
 
     selected_ids = st.multiselect("選擇要刪除的 ID", options=df['id'].tolist() if not df.empty else [])
-    if st.button("🗑️ 刪除選取的資料", type="secondary"):
+    if st.button("🗑️ 刪除選取的資料"):
         if selected_ids:
             for cid in selected_ids:
                 delete_car(cid)
             st.success(f"已刪除 {len(selected_ids)} 筆資料")
             st.rerun()
-        else:
-            st.warning("請先選擇要刪除的 ID")
 
 with tab2:
     st.subheader("新增 / 編輯模型車")
-    
     cars = get_all_cars()
     edit_options = [None] + list(cars['id']) if not cars.empty else [None]
     selected_id = st.selectbox(
@@ -121,15 +116,13 @@ with tab2:
 
     with st.form("car_form"):
         col1, col2 = st.columns(2)
-        
         with col1:
             brand = st.selectbox("品牌 *", ["Tiny", "MiniGT", "Tomica", "Tomica Premium", "BMC", "DCT", "拓意"])
             car_brand = st.text_input("車廠 *")
-            model = st.text_input("型號")                    # 非必填
+            model = st.text_input("型號")
             scale = st.selectbox("比例", ["1:64","1:43","1:32","1:18","1:10","1:8","1:76","1:110"])
             car_plate = st.text_input("車牌")
             car_number = st.text_input("編號")
-
         with col2:
             purchase_date = st.text_input("購買日期 (YYYY-MM-DD)")
             value = st.number_input("金額 (HKD)", min_value=0.0, step=10.0)
@@ -137,9 +130,7 @@ with tab2:
             product_web_link = st.text_input("產品連結")
             notes = st.text_area("備註", height=120)
 
-        submitted = st.form_submit_button("💾 儲存記錄", type="primary")
-        
-        if submitted:
+        if st.form_submit_button("💾 儲存記錄"):
             data = (brand, car_brand, model, scale, car_plate, car_number,
                     purchase_date, value, notes, product_id, product_web_link)
             save_car(data, selected_id)
@@ -156,9 +147,9 @@ with tab3:
         
         if uploaded_file is not None:
             try:
-                # 使用 pandas 預設引擎，避免 openpyxl 依賴問題
+                # 關鍵修正：不指定 engine，讓 pandas 自動處理
                 df = pd.read_excel(uploaded_file)
-                st.success("✅ 檔案讀取成功！以下是前10筆預覽：")
+                st.success("✅ 檔案讀取成功！預覽如下：")
                 st.dataframe(df.head(10))
                 
                 if st.button("確認匯入資料到資料庫"):
@@ -175,17 +166,17 @@ with tab3:
                                  value, notes, product_id, product_web_link)
                                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                             ''', (
-                                row.get('品牌'), 
-                                row.get('車廠'), 
-                                row.get('型號'),
-                                row.get('比例'), 
-                                row.get('車牌'), 
-                                row.get('編號'),
-                                row.get('購買日期'),
+                                str(row.get('品牌', '')).strip(),
+                                str(row.get('車廠', '')).strip(),
+                                str(row.get('型號', '')).strip(),
+                                str(row.get('比例', '')).strip(),
+                                str(row.get('車牌', '')).strip(),
+                                str(row.get('編號', '')).strip(),
+                                str(row.get('購買日期', '')).strip(),
                                 float(row.get('金額 (HKD)')) if pd.notna(row.get('金額 (HKD)')) else None,
-                                row.get('備註'), 
-                                row.get('產品編號'), 
-                                row.get('產品連結')
+                                str(row.get('備註', '')).strip(),
+                                str(row.get('產品編號', '')).strip(),
+                                str(row.get('產品連結', '')).strip()
                             ))
                             success += 1
                         except:
@@ -193,13 +184,12 @@ with tab3:
                     
                     conn.commit()
                     conn.close()
-                    
-                    st.success(f"✅ 匯入完成！成功 {success} 筆，跳過 {skipped} 筆")
+                    st.success(f"✅ 匯入完成！成功匯入 {success} 筆，跳過 {skipped} 筆")
                     st.rerun()
                     
             except Exception as e:
                 st.error(f"❌ 讀取 Excel 失敗：{str(e)}")
-                st.info("💡 建議：請確認 Excel 第一列的欄位名稱與程式中的欄位一致（品牌、車廠、型號等）")
+                st.info("💡 建議：請確保 Excel 第一列欄位名稱正確（品牌、車廠、型號、比例、車牌、編號、購買日期、金額 (HKD)、備註、產品編號、產品連結）")
 
     with col2:
         st.write("匯出到 Excel")
@@ -213,4 +203,4 @@ with tab3:
                 mime="text/csv"
             )
 
-st.caption("Model Car Record System v2.0 Beta | Streamlit 網頁版")
+st.caption("模型車記錄系統 v2.0 Beta | Streamlit 網頁版")
