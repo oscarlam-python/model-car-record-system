@@ -1,13 +1,12 @@
 import streamlit as st
 import pandas as pd
 import sqlite3
-import os
 from datetime import datetime
 
 st.set_page_config(page_title="模型車記錄系統 v2.0 Beta", layout="wide")
 st.title("🚗 模型車收藏管理系統 v2.0 Beta")
 
-DB_NAME = "model_cars_v2.0.db"
+DB_NAME = "model_cars.db"
 
 # ====================== 資料庫初始化 ======================
 def init_db():
@@ -31,7 +30,6 @@ def init_db():
     ''')
     conn.commit()
     conn.close()
-    print(f"資料庫已就緒：{os.path.abspath(DB_NAME)}")
 
 init_db()
 
@@ -127,7 +125,7 @@ with tab2:
         with col1:
             brand = st.selectbox("品牌 *", ["Tiny", "MiniGT", "Tomica", "Tomica Premium", "BMC", "DCT", "拓意"])
             car_brand = st.text_input("車廠 *")
-            model = st.text_input("型號")           # ← 非必填
+            model = st.text_input("型號")                    # 非必填
             scale = st.selectbox("比例", ["1:64","1:43","1:32","1:18","1:10","1:8","1:76","1:110"])
             car_plate = st.text_input("車牌")
             car_number = st.text_input("編號")
@@ -149,21 +147,24 @@ with tab2:
             st.rerun()
 
 with tab3:
-    st.subheader("Excel 匯入 / 匯出")
+    st.subheader("📊 Excel 匯入 / 匯出")
     col1, col2 = st.columns(2)
     
     with col1:
         st.write("從 Excel 匯入")
         uploaded_file = st.file_uploader("上傳 Excel 檔案", type=["xlsx", "xls"])
+        
         if uploaded_file is not None:
             try:
-                df = pd.read_excel(uploaded_file)
+                # 使用 openpyxl 引擎並處理錯誤
+                df = pd.read_excel(uploaded_file, engine='openpyxl')
                 st.dataframe(df.head(10))
                 
                 if st.button("確認匯入資料"):
                     conn = sqlite3.connect(DB_NAME)
                     cursor = conn.cursor()
                     success = 0
+                    
                     for _, row in df.iterrows():
                         cursor.execute('''
                             INSERT INTO model_cars 
@@ -171,19 +172,27 @@ with tab3:
                              value, notes, product_id, product_web_link)
                             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                         ''', (
-                            row.get('品牌'), row.get('車廠'), row.get('型號'),
-                            row.get('比例'), row.get('車牌'), row.get('編號'),
+                            row.get('品牌'), 
+                            row.get('車廠'), 
+                            row.get('型號'),
+                            row.get('比例'), 
+                            row.get('車牌'), 
+                            row.get('編號'),
                             row.get('購買日期'),
                             float(row.get('金額 (HKD)')) if pd.notna(row.get('金額 (HKD)')) else None,
-                            row.get('備註'), row.get('產品編號'), row.get('產品連結')
+                            row.get('備註'), 
+                            row.get('產品編號'), 
+                            row.get('產品連結')
                         ))
                         success += 1
+                    
                     conn.commit()
                     conn.close()
                     st.success(f"✅ 成功匯入 {success} 筆資料！")
                     st.rerun()
             except Exception as e:
                 st.error(f"讀取失敗：{str(e)}")
+                st.info("💡 提示：請確保 Excel 檔案有正確欄位名稱（如「品牌」「車廠」「型號」等）")
 
     with col2:
         st.write("匯出到 Excel")
