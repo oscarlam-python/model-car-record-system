@@ -120,12 +120,12 @@ with tab1:
             "model": st.column_config.TextColumn("型號", width=220),
             "scale": st.column_config.TextColumn("比例", width=90),
             "car_plate": st.column_config.TextColumn("車牌", width=130),
-            "car_number": st.column_config.TextColumn("編號", width=110),
+            "car_number": st.column_config.TextColumn("編號", width=180),
             "purchase_date": st.column_config.TextColumn("購買日期", width=130),
             "value": st.column_config.NumberColumn("金額 (HKD)", width=120, format="%.0f"),
-            "notes": st.column_config.TextColumn("備註", width=300),
+            "notes": st.column_config.TextColumn("備註", width=400),
             "product_id": st.column_config.TextColumn("產品編號", width=180),
-            "product_web_link": st.column_config.TextColumn("產品連結", width=350),
+            "product_web_link": st.column_config.TextColumn("產品連結", width=600),
         }
     )
 
