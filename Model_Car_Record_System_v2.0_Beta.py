@@ -3,8 +3,8 @@ import pandas as pd
 import sqlite3
 from datetime import datetime
 
-st.set_page_config(page_title="模型車記錄系統 v2.0 Beta", layout="wide")
-st.title("🚗 模型車收藏管理系統 v2.0 Beta")
+st.set_page_config(page_title="Model Car Record System", layout="wide")
+st.title("Model Car Record System")
 
 DB_NAME = "model_cars.db"
 
@@ -138,18 +138,17 @@ with tab2:
             st.rerun()
 
 with tab3:
-    st.subheader("📊 Excel 匯入 / 匯出")
+    st.subheader("📊 Excel 工具")
     col1, col2 = st.columns(2)
     
     with col1:
         st.write("從 Excel 匯入")
-        uploaded_file = st.file_uploader("上傳 Excel 檔案", type=["xlsx", "xls"])
+        uploaded_file = st.file_uploader("上傳 Excel 檔案 (.xlsx)", type=["xlsx"])
         
         if uploaded_file is not None:
             try:
-                # 關鍵修正：不指定 engine，讓 pandas 自動處理
                 df = pd.read_excel(uploaded_file)
-                st.success("✅ 檔案讀取成功！預覽如下：")
+                st.success("✅ 檔案讀取成功！預覽前 10 筆：")
                 st.dataframe(df.head(10))
                 
                 if st.button("確認匯入資料到資料庫"):
@@ -184,15 +183,14 @@ with tab3:
                     
                     conn.commit()
                     conn.close()
-                    st.success(f"✅ 匯入完成！成功匯入 {success} 筆，跳過 {skipped} 筆")
+                    st.success(f"✅ 匯入完成！成功 {success} 筆，跳過 {skipped} 筆")
                     st.rerun()
-                    
             except Exception as e:
-                st.error(f"❌ 讀取 Excel 失敗：{str(e)}")
+                st.error(f"❌ 讀取失敗：{str(e)}")
                 st.info("💡 建議：請確保 Excel 第一列欄位名稱正確（品牌、車廠、型號、比例、車牌、編號、購買日期、金額 (HKD)、備註、產品編號、產品連結）")
 
     with col2:
-        st.write("匯出到 Excel")
+        st.write("匯出資料")
         if st.button("📤 匯出目前所有資料"):
             df = get_all_cars()
             csv = df.to_csv(index=False).encode('utf-8')
@@ -203,4 +201,4 @@ with tab3:
                 mime="text/csv"
             )
 
-st.caption("模型車記錄系統 v2.0 Beta | Streamlit 網頁版")
+st.caption("Model Car Record System | By Oscar Lam | 2026/03/30 | v2.0 | Streamlit 網頁版")
