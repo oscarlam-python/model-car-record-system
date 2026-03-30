@@ -3,8 +3,8 @@ import pandas as pd
 import sqlite3
 from datetime import datetime
 
-st.set_page_config(page_title="模型車記錄系統 v2.0 Beta", layout="wide")
-st.title("🚗 模型車收藏管理系統 v2.0 Beta")
+st.set_page_config(page_title="Model Car Record System v2.0 Beta", layout="wide")
+st.title("Model Car Record System")
 
 DB_NAME = "model_cars.db"
 
@@ -238,4 +238,4 @@ with tab3:
             except Exception as e:
                 st.error(f"備份失敗：{str(e)}")
 
-st.caption("模型車記錄系統 v2.0 Beta | Streamlit 網頁版")
+st.caption("Model Car Record System | By Oscar Lam | 2026/03/30 | v2.0 Beta | Streamlit 網頁版")
