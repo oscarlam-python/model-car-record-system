@@ -33,7 +33,7 @@ def init_db():
 
 init_db()
 
-# ====================== 清理 NaN 函式 ======================
+# ====================== 清理 NaN ======================
 def clean_value(val):
     if val is None or pd.isna(val):
         return ""
@@ -98,9 +98,9 @@ with tab1:
     st.subheader("收藏列表")
     df = get_all_cars()
     
-    # === 徹底清理所有 NaN ===
+    # 徹底清理 NaN
     for col in df.columns:
-        df[col] = df[col].apply(lambda x: "" if pd.isna(x) or x is None else str(x).strip())
+        df[col] = df[col].apply(clean_value)
     
     keyword = st.text_input("🔍 搜尋", "")
     if keyword:
@@ -167,7 +167,7 @@ with tab3:
                 st.success("✅ 檔案讀取成功！預覽前 10 筆：")
                 st.dataframe(df.head(10))
                 
-                                if st.button("確認匯入資料到資料庫"):
+                if st.button("確認匯入資料到資料庫"):
                     conn = sqlite3.connect(DB_NAME)
                     cursor = conn.cursor()
                     success = 0
@@ -181,17 +181,17 @@ with tab3:
                                  value, notes, product_id, product_web_link)
                                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                             ''', (
-                                str(row.get('品牌', '')).strip() or None,
-                                str(row.get('車廠', '')).strip() or None,
-                                str(row.get('型號', '')).strip() or None,
-                                str(row.get('比例', '')).strip() or None,
-                                str(row.get('車牌', '')).strip() or None,
-                                str(row.get('編號', '')).strip() or None,
-                                str(row.get('購買日期', '')).strip() or None,
-                                float(row.get('金額 (HKD)')) if pd.notna(row.get('金額 (HKD)')) and str(row.get('金額 (HKD)')).strip() != '' else None,
-                                str(row.get('備註', '')).strip() or None,
-                                str(row.get('產品編號', '')).strip() or None,
-                                str(row.get('產品連結', '')).strip() or None
+                                str(row.get('品牌', '')).strip(),
+                                str(row.get('車廠', '')).strip(),
+                                str(row.get('型號', '')).strip(),
+                                str(row.get('比例', '')).strip(),
+                                str(row.get('車牌', '')).strip(),
+                                str(row.get('編號', '')).strip(),
+                                str(row.get('購買日期', '')).strip(),
+                                float(row.get('金額 (HKD)')) if pd.notna(row.get('金額 (HKD)')) else None,
+                                str(row.get('備註', '')).strip(),
+                                str(row.get('產品編號', '')).strip(),
+                                str(row.get('產品連結', '')).strip()
                             ))
                             success += 1
                         except:
@@ -212,7 +212,7 @@ with tab3:
             st.download_button(
                 label="下載 CSV 檔案",
                 data=csv,
-                file_name=f"MCRS_Record_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.csv",
+                file_name=f"MCRS_Record_{datetime.now().strftime('%Y-%m-%d_%H-%M')}.csv",
                 mime="text/csv"
             )
 
