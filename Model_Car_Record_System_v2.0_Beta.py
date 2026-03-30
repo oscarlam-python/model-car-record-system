@@ -3,8 +3,8 @@ import pandas as pd
 import sqlite3
 from datetime import datetime
 
-st.set_page_config(page_title="Model Car Record System", layout="wide")
-st.title("Model Car Record System")
+st.set_page_config(page_title="模型車記錄系統 v2.0 Beta", layout="wide")
+st.title("🚗 模型車收藏管理系統 v2.0 Beta")
 
 DB_NAME = "model_cars.db"
 
@@ -32,6 +32,12 @@ def init_db():
     conn.close()
 
 init_db()
+
+# ====================== 清理 NaN 函式 ======================
+def clean_value(val):
+    if val is None or pd.isna(val):
+        return ""
+    return str(val).strip()
 
 # ====================== 資料庫操作 ======================
 def get_all_cars():
@@ -91,9 +97,15 @@ tab1, tab2, tab3 = st.tabs(["📋 資料列表", "➕ 新增 / 編輯", "📊 Ex
 with tab1:
     st.subheader("收藏列表")
     df = get_all_cars()
+    
+    # 清理 NaN
+    for col in df.columns:
+        df[col] = df[col].apply(clean_value)
+    
     keyword = st.text_input("🔍 搜尋", "")
     if keyword:
         df = df[df.apply(lambda row: keyword.lower() in str(row).lower(), axis=1)]
+    
     st.dataframe(df, use_container_width=True, hide_index=True)
 
     selected_ids = st.multiselect("選擇要刪除的 ID", options=df['id'].tolist() if not df.empty else [])
@@ -138,7 +150,7 @@ with tab2:
             st.rerun()
 
 with tab3:
-    st.subheader("📊 Excel 工具 + 資料備份")
+    st.subheader("📊 Excel 工具")
     col1, col2 = st.columns(2)
     
     with col1:
@@ -151,6 +163,7 @@ with tab3:
                     df = pd.read_csv(uploaded_file)
                 else:
                     df = pd.read_excel(uploaded_file)
+                
                 st.success("✅ 檔案讀取成功！預覽前 10 筆：")
                 st.dataframe(df.head(10))
                 
@@ -159,6 +172,7 @@ with tab3:
                     cursor = conn.cursor()
                     success = 0
                     skipped = 0
+                    
                     for _, row in df.iterrows():
                         try:
                             cursor.execute('''
@@ -182,6 +196,7 @@ with tab3:
                             success += 1
                         except:
                             skipped += 1
+                    
                     conn.commit()
                     conn.close()
                     st.success(f"✅ 匯入完成！成功 {success} 筆，跳過 {skipped} 筆")
@@ -197,14 +212,13 @@ with tab3:
             st.download_button(
                 label="下載 CSV 檔案",
                 data=csv,
-                file_name=f"MCRS_Record_{datetime.now().strftime('%Y-%m-%d_%H-%M=%S')}.csv",
+                file_name=f"MCRS_Record_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.csv",
                 mime="text/csv"
             )
 
-        # ====================== 新增：資料備份自動化選項 ======================
         st.write("---")
-        st.write("**資料備份（自動化）**")
-        if st.button("💾 立即備份完整資料庫（.db）", type="primary"):
+        st.write("**資料備份**")
+        if st.button("💾 立即備份完整資料庫"):
             try:
                 with open(DB_NAME, "rb") as f:
                     db_bytes = f.read()
@@ -215,10 +229,8 @@ with tab3:
                     file_name=backup_name,
                     mime="application/octet-stream"
                 )
-                st.success(f"✅ 備份檔已準備好！檔名：{backup_name}")
+                st.success(f"✅ 備份準備完成：{backup_name}")
             except Exception as e:
                 st.error(f"備份失敗：{str(e)}")
 
-        st.caption("💡 建議：每次重要操作後點擊一次備份，按鈕會自動產生帶時間戳的檔案")
-
-st.caption("Model Car Record System | By Oscar Lam | 2026/03/30 | v2.0 | Streamlit 網頁版")
+st.caption("模型車記錄系統 v2.0 Beta | Streamlit 網頁版")
